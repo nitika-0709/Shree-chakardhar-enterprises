@@ -34,15 +34,16 @@
   </ul>
 </section>
 
+<!-- BOOKING FORM -->
 <section id="booking" class="booking">
   <h2>Book Your Car</h2>
 
-  <form action="https://formspree.io/f/mjknqrra" method="POST">
-    <input type="text" name="name" placeholder="Full Name" required>
-    <input type="tel" name="mobile" placeholder="Mobile Number" required>
-    <input type="text" name="address" placeholder="Address" required>
+  <form id="bookingForm">
+    <input type="text" id="name" placeholder="Full Name" required>
 
-    <select name="car" required>
+    <input type="tel" id="mobile" placeholder="Mobile Number" required>
+
+    <select id="car" required>
       <option value="">Select Car</option>
       <option>Hyundai Venue</option>
       <option>Maruti Fronx</option>
@@ -54,23 +55,34 @@
     </select>
 
     <label>From Date</label>
-    <input type="date" name="from_date" required>
+    <input type="date" id="from_date" required>
 
     <label>To Date</label>
-    <input type="date" name="to_date" required>
+    <input type="date" id="to_date" required>
 
     <button type="submit">Submit Booking</button>
   </form>
 
-  <p>Your booking details will be sent to <b>jangrahimanshu325@gmail.com</b></p>
+  <p><b>Status:</b> Booking request will be reviewed by admin.</p>
+</section>
+
+<!-- STATUS CHECK -->
+<section class="booking">
+  <h2>Check Booking Status</h2>
+
+  <input type="tel" id="checkMobile" placeholder="Enter your mobile number">
+  <button onclick="checkStatus()">Check Status</button>
+
+  <p id="statusResult" style="font-weight:bold;"></p>
 </section>
 
 <footer>
   <p><b>Shree Chakrdhar Enterprises</b> | Manesar, Gurgaon</p>
 </footer>
+
+<!-- FIREBASE + LOGIC -->
 <script src="firebase.js"></script>
 <script src="script.js"></script>
 
 </body>
 </html>
-
