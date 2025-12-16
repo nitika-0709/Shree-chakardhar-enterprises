@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel | Shree Chakrdhar Enterprises</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f4f4; padding:20px; }
+    h2 { text-align:center; }
+    .login, .panel { max-width:800px; margin:auto; background:#fff; padding:20px; border-radius:6px; }
+    input, button { padding:8px; margin:5px 0; }
+    button { cursor:pointer; }
+    .booking { border:1px solid #ddd; padding:10px; margin:10px 0; }
+    .accepted { color:green; font-weight:bold; }
+    .rejected { color:red; font-weight:bold; }
+    .pending { color:orange; font-weight:bold; }
+  </style>
+</head>
+<body>
+
+<h2>Admin Panel – Shree Chakrdhar Enterprises</h2>
+
+<div class="login" id="loginBox">
+  <h3>Admin Login</h3>
+  <input type="text" id="adminUser" placeholder="Username"><br>
+  <input type="password" id="adminPass" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<div class="panel" id="adminPanel" style="display:none;">
+  <h3>Customer Bookings</h3>
+  <div id="bookingList"></div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Firebase config -->
+<script src="firebase.js"></script>
+<script src="admin-script.js"></script>
+
+</body>
+</html>
