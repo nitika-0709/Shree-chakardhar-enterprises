@@ -20,17 +20,33 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 
 <h2>🚗 Shree Chakrdhar Enterprises</h2>
 
-<!-- PUBLIC CARS -->
+<!-- OUR CARS -->
 <div class="box">
 <h3>Our Cars</h3>
 <div id="carsContainer"></div>
+</div>
+
+<!-- BOOKING FORM -->
+<div class="box">
+<h3>Book Your Car</h3>
+<form id="bookingForm">
+<input id="custName" placeholder="Full Name" required>
+<input id="custMobile" placeholder="Mobile Number" required>
+<select id="custCar" required>
+  <option value="">Select Car</option>
+</select>
+<input type="date" id="fromDate" required>
+<input type="date" id="toDate" required>
+<button type="submit">Submit Booking</button>
+</form>
+<p id="bookingMsg"></p>
 </div>
 
 <!-- ADMIN LOGIN -->
 <div class="box">
 <h3>Admin Login</h3>
 <input id="adminUser" placeholder="Username">
-<input id="adminPass" type="password" placeholder="Password">
+<input id="adminPass" type="password">
 <button id="loginBtn">Login</button>
 <p id="loginMsg"></p>
 </div>
@@ -39,14 +55,13 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 <div class="box admin-panel" id="adminPanel">
 <h3>Admin – Add / Update Car</h3>
 
-<input id="carName" placeholder="Car Name (e.g. Maruti Fronx)">
-<input id="carPrice" placeholder="Price per day (e.g. 2600)">
-<input id="carReg" placeholder="Registration (masked e.g. HR-xx-1234)">
+<input id="carName" placeholder="Car Name">
+<input id="carPrice" placeholder="Price per day">
+<input id="carReg" placeholder="Registration (HR-xx-1234)">
 <textarea id="carDesc" placeholder="Description"></textarea>
+<textarea id="carPhotos" placeholder="Photo URLs (min 5, one per line)"></textarea>
 
-<textarea id="carPhotos" placeholder="Paste PHOTO URLs (MIN 5) – one per line"></textarea>
 <button id="saveCarBtn">Save / Update Car</button>
-
 </div>
 
 <!-- Firebase -->
@@ -94,11 +109,15 @@ document.addEventListener("DOMContentLoaded", function () {
     carName.value=carPrice.value=carReg.value=carDesc.value=carPhotos.value="";
   };
 
-  /* ===== LOAD CARS PUBLIC ===== */
+  /* ===== LOAD CARS (PUBLIC + BOOKING DROPDOWN) ===== */
   db.collection("cars").onSnapshot(snap=>{
     carsContainer.innerHTML="";
+    custCar.innerHTML='<option value="">Select Car</option>';
+
     snap.forEach(doc=>{
       const c=doc.data();
+      custCar.innerHTML+=`<option>${c.name}</option>`;
+
       let imgs="";
       c.photos.forEach(p=>imgs+=`<img src="${p}">`);
       carsContainer.innerHTML+=`
@@ -110,6 +129,23 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>`;
     });
   });
+
+  /* ===== BOOKING SUBMIT ===== */
+  bookingForm.onsubmit=e=>{
+    e.preventDefault();
+    db.collection("bookings").add({
+      name:custName.value,
+      mobile:custMobile.value,
+      car:custCar.value,
+      from:fromDate.value,
+      to:toDate.value,
+      status:"Pending",
+      time:new Date()
+    });
+    bookingMsg.innerText="Booking submitted. Status: Pending";
+    bookingMsg.style.color="green";
+    bookingForm.reset();
+  };
 
 });
 </script>
