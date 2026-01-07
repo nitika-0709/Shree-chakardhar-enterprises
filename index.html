@@ -6,16 +6,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{font-family:Arial;background:#f2f2f2;padding:15px}
-.box{background:#fff;padding:15px;margin:15px auto;max-width:800px;border-radius:6px}
-input,select,button{width:100%;padding:8px;margin:6px 0}
+h2,h3{text-align:center}
+.box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
+input,select,textarea,button{width:100%;padding:8px;margin:6px 0}
 button{background:#000;color:#fff;border:none;cursor:pointer}
-.admin-panel{display:none;border:2px solid #000;padding:10px}
+.admin-panel{display:none;border:2px solid #000}
+.car-card{border:1px solid #ddd;padding:10px;margin:10px 0}
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.img-grid img{width:100%;height:80px;object-fit:cover;border-radius:4px}
 </style>
 </head>
 <body>
 
 <h2>🚗 Shree Chakrdhar Enterprises</h2>
 
+<!-- PUBLIC CARS -->
+<div class="box">
+<h3>Our Cars</h3>
+<div id="carsContainer"></div>
+</div>
+
+<!-- ADMIN LOGIN -->
 <div class="box">
 <h3>Admin Login</h3>
 <input id="adminUser" placeholder="Username">
@@ -24,9 +35,18 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 <p id="loginMsg"></p>
 </div>
 
+<!-- ADMIN PANEL -->
 <div class="box admin-panel" id="adminPanel">
-<h3>✅ Admin Panel Open</h3>
-<p>Login successful. System working.</p>
+<h3>Admin – Add / Update Car</h3>
+
+<input id="carName" placeholder="Car Name (e.g. Maruti Fronx)">
+<input id="carPrice" placeholder="Price per day (e.g. 2600)">
+<input id="carReg" placeholder="Registration (masked e.g. HR-xx-1234)">
+<textarea id="carDesc" placeholder="Description"></textarea>
+
+<textarea id="carPhotos" placeholder="Paste PHOTO URLs (MIN 5) – one per line"></textarea>
+<button id="saveCarBtn">Save / Update Car</button>
+
 </div>
 
 <!-- Firebase -->
@@ -39,30 +59,56 @@ firebase.initializeApp({
   authDomain: "shree-chakrdhar-booking-ed24a.firebaseapp.com",
   projectId: "shree-chakrdhar-booking-ed24a"
 });
+const db = firebase.firestore();
 </script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  const USER = "jangrah247";
-  const PASS = "jangra2025";
-
-  const btn = document.getElementById("loginBtn");
-  const panel = document.getElementById("adminPanel");
-  const msg = document.getElementById("loginMsg");
-
-  btn.addEventListener("click", function () {
-    const u = document.getElementById("adminUser").value.trim();
-    const p = document.getElementById("adminPass").value.trim();
-
-    if (u === USER && p === PASS) {
-      panel.style.display = "block";
-      msg.innerText = "Login successful";
-      msg.style.color = "green";
-    } else {
-      msg.innerText = "Wrong username or password";
-      msg.style.color = "red";
+  /* ===== ADMIN LOGIN ===== */
+  const USER="jangrah247", PASS="jangra2025";
+  loginBtn.onclick=()=>{
+    if(adminUser.value===USER && adminPass.value===PASS){
+      adminPanel.style.display="block";
+      loginMsg.innerText="Login successful";
+      loginMsg.style.color="green";
+    }else{
+      loginMsg.innerText="Wrong username or password";
+      loginMsg.style.color="red";
     }
+  };
+
+  /* ===== SAVE / UPDATE CAR ===== */
+  saveCarBtn.onclick=()=>{
+    const photos = carPhotos.value.split("\n").map(p=>p.trim()).filter(Boolean);
+    if(photos.length<5){alert("Minimum 5 photo URLs required");return;}
+
+    db.collection("cars").doc(carName.value).set({
+      name: carName.value,
+      price: carPrice.value,
+      reg: carReg.value,
+      description: carDesc.value,
+      photos: photos
+    });
+    alert("Car saved / updated");
+    carName.value=carPrice.value=carReg.value=carDesc.value=carPhotos.value="";
+  };
+
+  /* ===== LOAD CARS PUBLIC ===== */
+  db.collection("cars").onSnapshot(snap=>{
+    carsContainer.innerHTML="";
+    snap.forEach(doc=>{
+      const c=doc.data();
+      let imgs="";
+      c.photos.forEach(p=>imgs+=`<img src="${p}">`);
+      carsContainer.innerHTML+=`
+        <div class="car-card">
+          <b>${c.name}</b> – ₹${c.price}/day<br>
+          <b>Reg:</b> ${c.reg}<br>
+          ${c.description}
+          <div class="img-grid">${imgs}</div>
+        </div>`;
+    });
   });
 
 });
