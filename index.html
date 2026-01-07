@@ -1,93 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Shree Chakrdhar Enterprises | Self Drive Cars</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Shree Chakrdhar Enterprises</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{font-family:Arial;background:#f2f2f2;padding:10px}
+h2,h3{text-align:center}
+.box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
+input,select,textarea,button{width:100%;padding:8px;margin:6px 0}
+button{cursor:pointer;background:#222;color:#fff;border:none}
+.car-card{border:1px solid #ddd;padding:10px;margin:10px 0}
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.img-grid img{width:100%;height:80px;object-fit:cover;border-radius:4px}
+.pending{color:orange}
+.accepted{color:green}
+.rejected{color:red}
+.admin{display:none}
+</style>
 </head>
+
 <body>
 
-<header>
-  <h1>Shree Chakrdhar Enterprises</h1>
-  <p>Self Drive Cars | Corporate Cab | Outstation Tours</p>
-  <p>📍 Manesar, Gurgaon</p>
-  <p>📞 8396977520 | 💬 8307334324</p>
-  <p>📧 jangrahimanshu325@gmail.com</p>
-</header>
+<h2>🚗 Shree Chakrdhar Enterprises</h2>
 
-<section class="hero">
-  <h2>Reliable Self Drive & Corporate Car Rentals</h2>
-  <p>Affordable & Trusted Car Rentals</p>
-</section>
-
-<section class="cars">
-  <h2>Our Cars</h2>
-  <ul>
-    <li>Hyundai Venue – ₹2800/day</li>
-    <li>Maruti Fronx – ₹2600/day</li>
-    <li>Swift – ₹2200/day</li>
-    <li>i10 – ₹2000/day</li>
-    <li>Grand i10 – ₹2100/day</li>
-    <li>Scorpio S11 – ₹4500/day</li>
-    <li>Maruti Ciaz – ₹3000/day</li>
-  </ul>
-</section>
-
-<!-- BOOKING FORM -->
-<section id="booking" class="booking">
-  <h2>Book Your Car</h2>
-
-  <form id="bookingForm">
-    <input type="text" id="name" placeholder="Full Name" required>
-
-    <input type="tel" id="mobile" placeholder="Mobile Number" required>
-
-    <select id="car" required>
-      <option value="">Select Car</option>
-      <option>Hyundai Venue</option>
-      <option>Maruti Fronx</option>
-      <option>Swift</option>
-      <option>i10</option>
-      <option>Grand i10</option>
-      <option>Scorpio S11</option>
-      <option>Maruti Ciaz</option>
-    </select>
-
-    <label>From Date</label>
-    <input type="date" id="from_date" required>
-
-    <label>To Date</label>
-    <input type="date" id="to_date" required>
-
-    <button type="submit">Submit Booking</button>
-  </form>
-
-  <p><b>Status:</b> Booking request will be reviewed by admin.</p>
-</section>
+<!-- CUSTOMER BOOKING -->
+<div class="box">
+<h3>Book Your Car</h3>
+<form id="bookingForm">
+<input id="custName" placeholder="Full Name" required>
+<input id="custMobile" placeholder="Mobile Number" required>
+<select id="custCar" required></select>
+<input type="date" id="fromDate" required>
+<input type="date" id="toDate" required>
+<button type="submit">Submit Booking</button>
+</form>
+</div>
 
 <!-- STATUS CHECK -->
-<section class="booking">
-  <h2>Check Booking Status</h2>
+<div class="box">
+<h3>Check Booking Status</h3>
+<input id="checkMobile" placeholder="Enter Mobile Number">
+<button onclick="checkStatus()">Check</button>
+<p id="statusResult"></p>
+</div>
 
-  <input type="tel" id="checkMobile" placeholder="Enter your mobile number">
-  <button onclick="checkStatus()">Check Status</button>
+<!-- CARS DISPLAY -->
+<div class="box">
+<h3>Our Cars</h3>
+<div id="carsContainer"></div>
+</div>
 
-  <p id="statusResult" style="font-weight:bold;"></p>
-</section>
+<!-- ADMIN LOGIN -->
+<div class="box">
+<h3>Admin Login</h3>
+<input id="adminUser" placeholder="Username">
+<input id="adminPass" type="password" placeholder="Password">
+<button onclick="adminLogin()">Login</button>
+</div>
 
-<footer>
-  <p><b>Shree Chakrdhar Enterprises</b> | Manesar, Gurgaon</p>
-</footer>
+<!-- ADMIN PANEL -->
+<div class="box admin" id="adminPanel">
+<h3>Admin – Add / Update Car</h3>
 
-<!-- Firebase SDKs -->
+<input id="carName" placeholder="Car Name">
+<input id="carPrice" placeholder="Price per day">
+<input id="carReg" placeholder="Registration (HR-xx-1234)">
+<textarea id="carDesc" placeholder="Description"></textarea>
+
+<textarea id="carPhotos" placeholder="Paste photo URLs (min 5) – one per line"></textarea>
+
+<button onclick="saveCar()">Save / Update Car</button>
+
+<h3>Bookings</h3>
+<div id="bookingList"></div>
+</div>
+
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- Your JS files -->
-<script src="firebase.js"></script>
-<script src="script.js"></script>
-
-
-</body>
-</html>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAceQf7DxVI9d_-HnVchw4tmiBCSy2P3NI",
+  authDomain: "shree-chakrdhar-booking-ed24a.firebaseapp.com",
+  projectId: "shree-chakrdhar-booking-ed24a",
+  storageBucket: "shree-chakrdhar-booking-ed24a.firebasestorage.app",
+  messagingSenderId: "12806299260",
+  appId: "1:12806299260:web:eeacbd2
