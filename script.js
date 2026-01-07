@@ -1,69 +1,62 @@
+<script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  const form = document.getElementById("bookingForm");
+  const ADMIN_USER = "jangrah247";
+  const ADMIN_PASS = "jangra2025";
 
-  if (!form) {
-    console.error("bookingForm not found");
-    return;
-  }
+  const loginBtn = document.getElementById("adminLoginBtn");
+  const panel = document.getElementById("adminPanel");
 
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
+  if (loginBtn) {
+    loginBtn.addEventListener("click", function () {
+      const u = document.getElementById("adminUser").value;
+      const p = document.getElementById("adminPass").value;
 
-    const name = document.getElementById("name").value;
-    const mobile = document.getElementById("mobile").value;
-    const car = document.getElementById("car").value;
-    const fromDate = document.getElementById("from_date").value;
-    const toDate = document.getElementById("to_date").value;
-
-    db.collection("bookings").add({
-      name: name,
-      mobile: mobile,
-      car: car,
-      from_date: fromDate,
-      to_date: toDate,
-      status: "Pending",
-      reason: "",
-      createdAt: new Date()
-    })
-    .then(() => {
-      alert("Booking submitted successfully. Status: Pending");
-      form.reset();
-    })
-    .catch((error) => {
-      console.error("Error adding document: ", error);
-      alert("Error submitting booking. Check console.");
+      if (u === ADMIN_USER && p === ADMIN_PASS) {
+        panel.style.display = "block";
+        alert("Admin login successful");
+        loadBookings(); // bookings load
+      } else {
+        alert("Wrong username or password");
+      }
     });
-  });
+  }
 
 });
 
-function checkStatus() {
-  const mob = document.getElementById("checkMobile").value;
-  const result = document.getElementById("statusResult");
-
-  if (!mob) {
-    result.innerText = "Please enter mobile number";
-    return;
-  }
-
-  db.collection("bookings")
-    .where("mobile", "==", mob)
-    .get()
-    .then((querySnapshot) => {
-      if (querySnapshot.empty) {
-        result.innerText = "No booking found for this number";
-      } else {
-        querySnapshot.forEach((doc) => {
-          const d = doc.data();
-          result.innerText =
-            "Status: " + d.status +
-            (d.reason ? " | Reason: " + d.reason : "");
-        });
-      }
-    })
-    .catch((error) => {
-      console.error("Error checking status: ", error);
-      result.innerText = "Error checking status";
+/* LOAD BOOKINGS */
+function loadBookings() {
+  db.collection("bookings").onSnapshot(s => {
+    bookingList.innerHTML = "";
+    s.forEach(d => {
+      let x = d.data();
+      bookingList.innerHTML += `
+      <div class="car-card">
+        ${x.name} | ${x.car} | ${x.mobile}<br>
+        Status: ${x.status}<br>
+        <button onclick="updateBooking('${d.id}','Accepted')">Accept</button>
+        <button onclick="rejectBooking('${d.id}')">Reject</button>
+      </div>`;
     });
+  });
 }
+
+/* UPDATE */
+function updateBooking(id, status) {
+  db.collection("bookings").doc(id).update({
+    status: status,
+    reason: ""
+  });
+}
+
+/* REJECT */
+function rejectBooking(id) {
+  const reason = prompt("Reason for rejection?");
+  if (!reason) return;
+
+  db.collection("bookings").doc(id).update({
+    status: "Rejected",
+    reason: reason
+  });
+}
+</script>
