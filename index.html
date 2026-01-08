@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Shree Chakrdhar Enterprises</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{font-family:Arial;background:#f4f4f4;padding:15px}
 .box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
@@ -29,17 +30,20 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 <div id="carsContainer">Loading cars...</div>
 </div>
 
-<!-- BOOKING -->
+<!-- BOOKING FORM -->
 <div class="box">
 <h3>Book Your Car</h3>
 <form id="bookingForm">
 <input id="custName" placeholder="Full Name" required>
 <input id="custMobile" placeholder="Mobile Number" required>
+
 <select id="custCar" required>
   <option value="">Select Car</option>
 </select>
+
 <input type="date" id="fromDate" required>
 <input type="date" id="toDate" required>
+
 <button type="submit">Book Now</button>
 </form>
 <p id="bookingMsg"></p>
@@ -73,7 +77,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const custCar = document.getElementById("custCar");
   const bookingForm = document.getElementById("bookingForm");
   const bookingMsg = document.getElementById("bookingMsg");
-  const checkBtn = document.getElementById("checkBtn");
   const statusResult = document.getElementById("statusResult");
 
   /* LOAD CARS */
@@ -82,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
     custCar.innerHTML='<option value="">Select Car</option>';
 
     if(snap.empty){
-      carsContainer.innerHTML="<b>No cars available.</b>";
+      carsContainer.innerHTML="<b>No cars available right now.</b>";
       return;
     }
 
@@ -91,66 +94,26 @@ document.addEventListener("DOMContentLoaded", function () {
       custCar.innerHTML += `<option value="${c.name}">${c.name}</option>`;
 
       let imgs="";
-      (c.photos||[]).forEach(p=>imgs+=`<img src="${p}">`);
+      (c.photos || []).forEach(p=>{
+        imgs += `<img src="${p}" onerror="this.style.display='none'">`;
+      });
 
       carsContainer.innerHTML += `
         <div class="car">
           <b>${c.name}</b> – ₹${c.price}/day<br>
-          ${c.description||""}
+          ${c.description || ""}
           <div class="imgs">${imgs}</div>
-        </div>`;
+        </div>
+      `;
     });
   });
 
-  /* BOOKING SUBMIT — THIS WILL 100% FIRE */
-  bookingForm.addEventListener("submit", function (e) {
+  /* BOOKING SUBMIT */
+  bookingForm.addEventListener("submit", function(e){
     e.preventDefault();
 
-    db.collection("bookings").add({
-      name: document.getElementById("custName").value,
-      mobile: document.getElementById("custMobile").value,
-      car: custCar.value,
-      from: document.getElementById("fromDate").value,
-      to: document.getElementById("toDate").value,
-      status: "Pending",
-      reason: "",
-      time: new Date()
-    }).then(()=>{
-      bookingMsg.innerHTML =
-        '<span class="pending">✅ Booking submitted. Waiting for admin approval.</span>';
-      bookingForm.reset();
-    }).catch(err=>{
-      alert("Booking failed: " + err.message);
-    });
-  });
-
-  /* STATUS CHECK */
-  checkBtn.addEventListener("click", function () {
-    statusResult.innerHTML="";
-    const mobile = document.getElementById("checkMobile").value;
-
-    db.collection("bookings")
-      .where("mobile","==",mobile)
-      .orderBy("time","desc")
-      .limit(1)
-      .get()
-      .then(snap=>{
-        if(snap.empty){
-          statusResult.innerText="No booking found";
-          return;
-        }
-        snap.forEach(doc=>{
-          const d = doc.data();
-          statusResult.innerHTML =
-            `<span class="${d.status.toLowerCase()}">
-             ${d.status}${d.reason?" - "+d.reason:""}
-             </span>`;
-        });
-      });
-  });
-
-});
-</script>
-
-</body>
-</html>
+    const nameVal   = document.getElementById("custName").value || "";
+    const mobileVal = document.getElementById("custMobile").value || "";
+    const carVal    = custCar.value || "";
+    const fromVal   = document.getElementById("fromDate").value || "";
+    const toVal     = document.getElementById("toDate").value || "";
