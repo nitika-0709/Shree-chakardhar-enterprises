@@ -1,22 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <title>Shree Chakrdhar Enterprises</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body{font-family:Arial;background:#f4f4f4;padding:15px}
-.box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
-h2,h3{text-align:center}
-input,select,button{width:100%;padding:10px;margin:8px 0}
-button{background:#000;color:#fff;border:none;cursor:pointer}
-.car{border:1px solid #ddd;padding:10px;margin:10px 0}
-.imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
-.imgs img{width:100%;height:80px;object-fit:cover;border-radius:4px}
-.pending{color:orange;font-weight:bold}
-.accepted{color:green;font-weight:bold}
-.rejected{color:red;font-weight:bold}
+.box{background:#fff;padding:15px;margin:15px auto;max-width:900px}
+.car{border:1px solid #ccc;padding:10px;margin:10px 0}
+img{width:120px;height:80px;object-fit:cover;margin:4px}
+.pending{color:orange}
+.accepted{color:green}
+.rejected{color:red}
 </style>
 </head>
 
@@ -24,138 +18,69 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 
 <h2>🚗 Shree Chakrdhar Enterprises</h2>
 
-<!-- AVAILABLE CARS -->
 <div class="box">
 <h3>Available Cars</h3>
-<div id="carsContainer"></div>
+
+<div class="car">
+<b>Maruti Fronx</b> – ₹2600/day<br>
+<img src="https://images.unsplash.com/photo-1619767886558-efdc259cde1b">
+<img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2">
 </div>
 
-<!-- BOOKING -->
+<div class="car">
+<b>Swift</b> – ₹2200/day<br>
+<img src="https://images.unsplash.com/photo-1621348585657-1d06b9c5c6f4">
+<img src="https://images.unsplash.com/photo-1619682817481-e994891cd1f3">
+</div>
+
+</div>
+
 <div class="box">
 <h3>Book Your Car</h3>
-<form id="bookingForm">
-<input id="custName" placeholder="Full Name" required>
-<input id="custMobile" placeholder="Mobile Number" required>
 
-<select id="custCar" required></select>
+<input id="name" placeholder="Name"><br>
+<input id="mobile" placeholder="Mobile"><br>
 
-<input type="date" id="fromDate" required>
-<input type="date" id="toDate" required>
+<select id="car">
+<option value="">Select Car</option>
+<option>Maruti Fronx</option>
+<option>Swift</option>
+</select><br>
 
-<button type="submit">Book Now</button>
-</form>
-<p id="bookingMsg"></p>
+<input type="date" id="from"><br>
+<input type="date" id="to"><br>
+
+<button onclick="book()">Book Now</button>
+<p id="msg"></p>
 </div>
 
-<!-- STATUS -->
 <div class="box">
 <h3>Check Booking Status</h3>
-<input id="checkMobile" placeholder="Mobile Number">
-<button id="checkBtn">Check Status</button>
-<p id="statusResult"></p>
+<input id="checkMobile" placeholder="Mobile">
+<button onclick="check()">Check</button>
+<p id="status"></p>
 </div>
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyAceQf7DxVI9d_-HnVchw4tmiBCSy2P3NI",
-  authDomain: "shree-chakrdhar-booking-ed24a.firebaseapp.com",
-  projectId: "shree-chakrdhar-booking-ed24a"
-});
-const db = firebase.firestore();
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-  const carsContainer = document.getElementById("carsContainer");
-  const custCar = document.getElementById("custCar");
-
-  /* ===== FALLBACK CARS (GUARANTEED DISPLAY) ===== */
-  const fallbackCars = [
-    {name:"Maruti Fronx", price:2600},
-    {name:"Swift", price:2200},
-    {name:"i10", price:2000},
-    {name:"Grand i10", price:2100},
-    {name:"Scorpio S11", price:4500}
-  ];
-
-  function renderCars(cars){
-    carsContainer.innerHTML="";
-    custCar.innerHTML='<option value="">Select Car</option>';
-    cars.forEach(c=>{
-      custCar.innerHTML+=`<option>${c.name}</option>`;
-      carsContainer.innerHTML+=`
-        <div class="car">
-          <b>${c.name}</b> – ₹${c.price}/day
-        </div>`;
-    });
-  }
-
-  /* ===== TRY FIREBASE ===== */
-  db.collection("cars").get()
-    .then(snap=>{
-      if(snap.empty){
-        renderCars(fallbackCars);
-      }else{
-        const cars=[];
-        snap.forEach(d=>{
-          const x=d.data();
-          cars.push({
-            name:x.name || "Car",
-            price:x.price || "-"
-          });
-        });
-        renderCars(cars);
-      }
-    })
-    .catch(()=>{
-      renderCars(fallbackCars);
-    });
-
-  /* ===== BOOKING ===== */
-  bookingForm.addEventListener("submit", e=>{
-    e.preventDefault();
-    db.collection("bookings").add({
-      name:custName.value,
-      mobile:custMobile.value,
-      car:custCar.value,
-      from:fromDate.value,
-      to:toDate.value,
-      status:"Pending",
-      reason:"",
-      createdAt:firebase.firestore.Timestamp.now()
-    }).then(()=>{
-      bookingMsg.innerHTML =
-        '<span class="pending">Booking submitted. Waiting for approval.</span>';
-      bookingForm.reset();
-    });
-  });
-
-  /* ===== STATUS CHECK ===== */
-  checkBtn.onclick=()=>{
-    statusResult.innerHTML="";
-    db.collection("bookings")
-      .where("mobile","==",checkMobile.value)
-      .orderBy("createdAt","desc")
-      .limit(1)
-      .get()
-      .then(s=>{
-        if(s.empty){statusResult.innerText="No booking found";return;}
-        s.forEach(d=>{
-          const x=d.data();
-          statusResult.innerHTML=
-            `<span class="${x.status.toLowerCase()}">
-             ${x.status}${x.reason?" - "+x.reason:""}
-             </span>`;
-        });
-      });
+function book(){
+  const booking={
+    name:name.value,
+    mobile:mobile.value,
+    car:car.value,
+    status:"Pending",
+    reason:""
   };
+  localStorage.setItem("booking_"+mobile.value,JSON.stringify(booking));
+  msg.innerHTML="<span class='pending'>Booking submitted – Waiting for approval</span>";
+}
 
-});
+function check(){
+  const data=localStorage.getItem("booking_"+checkMobile.value);
+  if(!data){status.innerText="No booking found";return;}
+  const b=JSON.parse(data);
+  status.innerHTML=`<span class="${b.status.toLowerCase()}">
+  ${b.status} ${b.reason?("- "+b.reason):""}</span>`;
+}
 </script>
 
 </body>
