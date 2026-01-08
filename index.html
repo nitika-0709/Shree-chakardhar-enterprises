@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Shree Chakrdhar Enterprises</title>
+<title>Shree Chakrdhar Enterprises – Car Booking</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{font-family:Arial;background:#f4f4f4;padding:15px}
 .box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
@@ -13,8 +14,12 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 .car{border:1px solid #ddd;padding:10px;margin:10px 0}
 .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
 .imgs img{width:100%;height:80px;object-fit:cover;border-radius:4px}
+.pending{color:orange;font-weight:bold}
+.accepted{color:green;font-weight:bold}
+.rejected{color:red;font-weight:bold}
 </style>
 </head>
+
 <body>
 
 <h2>🚗 Shree Chakrdhar Enterprises</h2>
@@ -25,20 +30,28 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 <div id="carsContainer"></div>
 </div>
 
-<!-- BOOKING -->
+<!-- BOOKING FORM -->
 <div class="box">
 <h3>Book Your Car</h3>
 <form id="bookingForm">
-<input id="name" placeholder="Full Name" required>
-<input id="mobile" placeholder="Mobile Number" required>
-<select id="carSelect" required>
+<input id="custName" placeholder="Full Name" required>
+<input id="custMobile" placeholder="Mobile Number" required>
+<select id="custCar" required>
 <option value="">Select Car</option>
 </select>
 <input type="date" id="fromDate" required>
 <input type="date" id="toDate" required>
 <button type="submit">Book Now</button>
 </form>
-<p id="msg"></p>
+<p id="bookingMsg"></p>
+</div>
+
+<!-- CHECK STATUS -->
+<div class="box">
+<h3>Check Booking Status</h3>
+<input id="checkMobile" placeholder="Enter Mobile Number">
+<button id="checkBtn">Check Status</button>
+<p id="statusResult"></p>
 </div>
 
 <!-- FIREBASE -->
@@ -55,45 +68,68 @@ const db = firebase.firestore();
 </script>
 
 <script>
-// LOAD CARS
-db.collection("cars").onSnapshot(snap=>{
-  carsContainer.innerHTML="";
-  carSelect.innerHTML='<option value="">Select Car</option>';
+document.addEventListener("DOMContentLoaded", function () {
 
-  snap.forEach(doc=>{
-    const c = doc.data();
-    carSelect.innerHTML += `<option>${c.name}</option>`;
+  /* LOAD CARS */
+  db.collection("cars").onSnapshot(snap=>{
+    carsContainer.innerHTML="";
+    custCar.innerHTML='<option value="">Select Car</option>';
 
-    let imgs="";
-    c.photos.forEach(p=>imgs+=`<img src="${p}">`);
+    snap.forEach(doc=>{
+      const c = doc.data();
+      custCar.innerHTML += `<option>${c.name}</option>`;
 
-    carsContainer.innerHTML += `
-      <div class="car">
-        <b>${c.name}</b> – ₹${c.price}/day<br>
-        ${c.description}
-        <div class="imgs">${imgs}</div>
-      </div>
-    `;
+      let imgs="";
+      c.photos.forEach(p=>imgs+=`<img src="${p}">`);
+
+      carsContainer.innerHTML += `
+        <div class="car">
+          <b>${c.name}</b> – ₹${c.price}/day<br>
+          ${c.description}
+          <div class="imgs">${imgs}</div>
+        </div>
+      `;
+    });
   });
-});
 
-// BOOKING SUBMIT
-bookingForm.onsubmit = e => {
-  e.preventDefault();
-  db.collection("bookings").add({
-    name:name.value,
-    mobile:mobile.value,
-    car:carSelect.value,
-    from:fromDate.value,
-    to:toDate.value,
-    status:"Pending",
-    time:new Date()
+  /* BOOKING SUBMIT */
+  bookingForm.addEventListener("submit", function(e){
+    e.preventDefault();
+
+    db.collection("bookings").add({
+      name: custName.value,
+      mobile: custMobile.value,
+      car: custCar.value,
+      from: fromDate.value,
+      to: toDate.value,
+      status: "Pending",
+      reason: "",
+      time: new Date()
+    }).then(()=>{
+      bookingMsg.innerHTML =
+        '<span class="pending">✅ Booking submitted. Waiting for admin approval.</span>';
+      bookingForm.reset();
+    });
   });
-  msg.innerText = "Booking submitted. We will contact you soon.";
-  msg.style.color="green";
-  bookingForm.reset();
-};
-</script>
 
-</body>
-</html>
+  /* CHECK STATUS */
+  checkBtn.addEventListener("click", function(){
+    const m = checkMobile.value.trim();
+    statusResult.innerHTML = "";
+
+    if(!m){ alert("Enter mobile number"); return; }
+
+    db.collection("bookings")
+      .where("mobile","==",m)
+      .orderBy("time","desc")
+      .limit(1)
+      .get()
+      .then(snap=>{
+        if(snap.empty){
+          statusResult.innerText="No booking found.";
+          return;
+        }
+
+        snap.forEach(doc=>{
+          const d = doc.data();
+          if(d.status
