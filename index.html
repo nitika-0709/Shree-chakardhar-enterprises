@@ -9,7 +9,7 @@
 body{font-family:Arial;background:#f4f4f4;padding:15px}
 .box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
 h2,h3{text-align:center}
-input,select,button{width:100%;padding:8px;margin:6px 0}
+input,select,button{width:100%;padding:10px;margin:8px 0}
 button{background:#000;color:#fff;border:none;cursor:pointer}
 .car{border:1px solid #ddd;padding:10px;margin:10px 0}
 .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
@@ -34,8 +34,9 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 <div class="box">
 <h3>Book Your Car</h3>
 <form id="bookingForm">
-<input id="custName" placeholder="Full Name" required>
-<input id="custMobile" placeholder="Mobile Number" required>
+
+<input type="text" id="custName" placeholder="Full Name" required>
+<input type="tel" id="custMobile" placeholder="Mobile Number" required>
 
 <select id="custCar" required>
   <option value="">Select Car</option>
@@ -45,6 +46,7 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 <input type="date" id="toDate" required>
 
 <button type="submit">Book Now</button>
+
 </form>
 <p id="bookingMsg"></p>
 </div>
@@ -52,7 +54,7 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 <!-- CHECK STATUS -->
 <div class="box">
 <h3>Check Booking Status</h3>
-<input id="checkMobile" placeholder="Enter Mobile Number">
+<input type="tel" id="checkMobile" placeholder="Enter Mobile Number">
 <button id="checkBtn">Check Status</button>
 <p id="statusResult"></p>
 </div>
@@ -79,41 +81,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const bookingMsg = document.getElementById("bookingMsg");
   const statusResult = document.getElementById("statusResult");
 
-  /* LOAD CARS */
-  db.collection("cars").onSnapshot(snap=>{
-    carsContainer.innerHTML="";
-    custCar.innerHTML='<option value="">Select Car</option>';
+  /* ===== LOAD CARS (100% SAFE) ===== */
+  db.collection("cars").onSnapshot(snapshot => {
+    carsContainer.innerHTML = "";
+    custCar.innerHTML = '<option value="">Select Car</option>';
 
-    if(snap.empty){
-      carsContainer.innerHTML="<b>No cars available right now.</b>";
+    if (snapshot.empty) {
+      carsContainer.innerHTML = "<b>No cars available right now.</b>";
       return;
     }
 
-    snap.forEach(doc=>{
-      const c = doc.data();
-      custCar.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-
-      let imgs="";
-      (c.photos || []).forEach(p=>{
-        imgs += `<img src="${p}" onerror="this.style.display='none'">`;
-      });
-
-      carsContainer.innerHTML += `
-        <div class="car">
-          <b>${c.name}</b> – ₹${c.price}/day<br>
-          ${c.description || ""}
-          <div class="imgs">${imgs}</div>
-        </div>
-      `;
-    });
-  });
-
-  /* BOOKING SUBMIT */
-  bookingForm.addEventListener("submit", function(e){
-    e.preventDefault();
-
-    const nameVal   = document.getElementById("custName").value || "";
-    const mobileVal = document.getElementById("custMobile").value || "";
-    const carVal    = custCar.value || "";
-    const fromVal   = document.getElementById("fromDate").value || "";
-    const toVal     = document.getElementById("toDate").value || "";
+    snapshot.forEach(doc =>
