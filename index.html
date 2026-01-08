@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Shree Chakrdhar Enterprises – Car Booking</title>
+<title>Shree Chakrdhar Enterprises</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{font-family:Arial;background:#f4f4f4;padding:15px}
 .box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
@@ -24,19 +23,19 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 
 <h2>🚗 Shree Chakrdhar Enterprises</h2>
 
-<!-- OUR CARS -->
+<!-- AVAILABLE CARS -->
 <div class="box">
 <h3>Available Cars</h3>
-<div id="carsContainer"></div>
+<div id="carsContainer">Loading cars...</div>
 </div>
 
-<!-- BOOKING FORM -->
+<!-- BOOKING -->
 <div class="box">
 <h3>Book Your Car</h3>
 <form id="bookingForm">
-<input id="custName" placeholder="Full Name" required>
-<input id="custMobile" placeholder="Mobile Number" required>
-<select id="custCar" required>
+<input id="name" placeholder="Full Name" required>
+<input id="mobile" placeholder="Mobile Number" required>
+<select id="carSelect" required>
 <option value="">Select Car</option>
 </select>
 <input type="date" id="fromDate" required>
@@ -68,68 +67,78 @@ const db = firebase.firestore();
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
 
   /* LOAD CARS */
   db.collection("cars").onSnapshot(snap=>{
     carsContainer.innerHTML="";
-    custCar.innerHTML='<option value="">Select Car</option>';
+    carSelect.innerHTML='<option value="">Select Car</option>';
+
+    if(snap.empty){
+      carsContainer.innerHTML="<b>No cars available right now.</b>";
+      return;
+    }
 
     snap.forEach(doc=>{
-      const c = doc.data();
-      custCar.innerHTML += `<option>${c.name}</option>`;
+      const c=doc.data();
+      carSelect.innerHTML+=`<option>${c.name}</option>`;
 
       let imgs="";
-      c.photos.forEach(p=>imgs+=`<img src="${p}">`);
+      (c.photos||[]).forEach(p=>imgs+=`<img src="${p}">`);
 
-      carsContainer.innerHTML += `
+      carsContainer.innerHTML+=`
         <div class="car">
           <b>${c.name}</b> – ₹${c.price}/day<br>
-          ${c.description}
+          ${c.description||""}
           <div class="imgs">${imgs}</div>
-        </div>
-      `;
+        </div>`;
     });
   });
 
-  /* BOOKING SUBMIT */
-  bookingForm.addEventListener("submit", function(e){
+  /* BOOKING */
+  bookingForm.addEventListener("submit",e=>{
     e.preventDefault();
-
     db.collection("bookings").add({
-      name: custName.value,
-      mobile: custMobile.value,
-      car: custCar.value,
-      from: fromDate.value,
-      to: toDate.value,
-      status: "Pending",
-      reason: "",
-      time: new Date()
+      name:name.value,
+      mobile:mobile.value,
+      car:carSelect.value,
+      from:fromDate.value,
+      to:toDate.value,
+      status:"Pending",
+      reason:"",
+      time:new Date()
     }).then(()=>{
-      bookingMsg.innerHTML =
-        '<span class="pending">✅ Booking submitted. Waiting for admin approval.</span>';
+      bookingMsg.innerHTML='<span class="pending">Booking submitted. Waiting for approval.</span>';
       bookingForm.reset();
     });
   });
 
-  /* CHECK STATUS */
-  checkBtn.addEventListener("click", function(){
-    const m = checkMobile.value.trim();
-    statusResult.innerHTML = "";
-
-    if(!m){ alert("Enter mobile number"); return; }
-
+  /* STATUS CHECK */
+  checkBtn.onclick=()=>{
+    statusResult.innerHTML="";
     db.collection("bookings")
-      .where("mobile","==",m)
+      .where("mobile","==",checkMobile.value)
       .orderBy("time","desc")
       .limit(1)
       .get()
       .then(snap=>{
         if(snap.empty){
-          statusResult.innerText="No booking found.";
+          statusResult.innerText="No booking found";
           return;
         }
+        snap.forEach(d=>{
+          const x=d.data();
+          let cls=x.status.toLowerCase();
+          statusResult.innerHTML=
+            `<span class="${cls}">
+             ${x.status}${x.reason?" - "+x.reason:""}
+             </span>`;
+        });
+      });
+  };
 
-        snap.forEach(doc=>{
-          const d = doc.data();
-          if(d.status
+});
+</script>
+
+</body>
+</html>
