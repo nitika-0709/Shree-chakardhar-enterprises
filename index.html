@@ -5,15 +5,14 @@
 <title>Shree Chakrdhar Enterprises</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial;background:#f2f2f2;padding:15px}
-h2,h3{text-align:center}
+body{font-family:Arial;background:#f4f4f4;padding:15px}
 .box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
-input,select,textarea,button{width:100%;padding:8px;margin:6px 0}
+h2,h3{text-align:center}
+input,select,button{width:100%;padding:8px;margin:6px 0}
 button{background:#000;color:#fff;border:none;cursor:pointer}
-.admin-panel{display:none;border:2px solid #000}
-.car-card{border:1px solid #ddd;padding:10px;margin:10px 0}
-.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
-.img-grid img{width:100%;height:80px;object-fit:cover;border-radius:4px}
+.car{border:1px solid #ddd;padding:10px;margin:10px 0}
+.imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.imgs img{width:100%;height:80px;object-fit:cover;border-radius:4px}
 </style>
 </head>
 <body>
@@ -22,49 +21,27 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 
 <!-- OUR CARS -->
 <div class="box">
-<h3>Our Cars</h3>
+<h3>Available Cars</h3>
 <div id="carsContainer"></div>
 </div>
 
-<!-- BOOKING FORM -->
+<!-- BOOKING -->
 <div class="box">
 <h3>Book Your Car</h3>
 <form id="bookingForm">
-<input id="custName" placeholder="Full Name" required>
-<input id="custMobile" placeholder="Mobile Number" required>
-<select id="custCar" required>
-  <option value="">Select Car</option>
+<input id="name" placeholder="Full Name" required>
+<input id="mobile" placeholder="Mobile Number" required>
+<select id="carSelect" required>
+<option value="">Select Car</option>
 </select>
 <input type="date" id="fromDate" required>
 <input type="date" id="toDate" required>
-<button type="submit">Submit Booking</button>
+<button type="submit">Book Now</button>
 </form>
-<p id="bookingMsg"></p>
+<p id="msg"></p>
 </div>
 
-<!-- ADMIN LOGIN -->
-<div class="box">
-<h3>Admin Login</h3>
-<input id="adminUser" placeholder="Username">
-<input id="adminPass" type="password">
-<button id="loginBtn">Login</button>
-<p id="loginMsg"></p>
-</div>
-
-<!-- ADMIN PANEL -->
-<div class="box admin-panel" id="adminPanel">
-<h3>Admin – Add / Update Car</h3>
-
-<input id="carName" placeholder="Car Name">
-<input id="carPrice" placeholder="Price per day">
-<input id="carReg" placeholder="Registration (HR-xx-1234)">
-<textarea id="carDesc" placeholder="Description"></textarea>
-<textarea id="carPhotos" placeholder="Photo URLs (min 5, one per line)"></textarea>
-
-<button id="saveCarBtn">Save / Update Car</button>
-</div>
-
-<!-- Firebase -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -78,76 +55,44 @@ const db = firebase.firestore();
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+// LOAD CARS
+db.collection("cars").onSnapshot(snap=>{
+  carsContainer.innerHTML="";
+  carSelect.innerHTML='<option value="">Select Car</option>';
 
-  /* ===== ADMIN LOGIN ===== */
-  const USER="jangrah247", PASS="jangra2025";
-  loginBtn.onclick=()=>{
-    if(adminUser.value===USER && adminPass.value===PASS){
-      adminPanel.style.display="block";
-      loginMsg.innerText="Login successful";
-      loginMsg.style.color="green";
-    }else{
-      loginMsg.innerText="Wrong username or password";
-      loginMsg.style.color="red";
-    }
-  };
+  snap.forEach(doc=>{
+    const c = doc.data();
+    carSelect.innerHTML += `<option>${c.name}</option>`;
 
-  /* ===== SAVE / UPDATE CAR ===== */
-  saveCarBtn.onclick=()=>{
-    const photos = carPhotos.value.split("\n").map(p=>p.trim()).filter(Boolean);
-    if(photos.length<5){alert("Minimum 5 photo URLs required");return;}
+    let imgs="";
+    c.photos.forEach(p=>imgs+=`<img src="${p}">`);
 
-    db.collection("cars").doc(carName.value).set({
-      name: carName.value,
-      price: carPrice.value,
-      reg: carReg.value,
-      description: carDesc.value,
-      photos: photos
-    });
-    alert("Car saved / updated");
-    carName.value=carPrice.value=carReg.value=carDesc.value=carPhotos.value="";
-  };
-
-  /* ===== LOAD CARS (PUBLIC + BOOKING DROPDOWN) ===== */
-  db.collection("cars").onSnapshot(snap=>{
-    carsContainer.innerHTML="";
-    custCar.innerHTML='<option value="">Select Car</option>';
-
-    snap.forEach(doc=>{
-      const c=doc.data();
-      custCar.innerHTML+=`<option>${c.name}</option>`;
-
-      let imgs="";
-      c.photos.forEach(p=>imgs+=`<img src="${p}">`);
-      carsContainer.innerHTML+=`
-        <div class="car-card">
-          <b>${c.name}</b> – ₹${c.price}/day<br>
-          <b>Reg:</b> ${c.reg}<br>
-          ${c.description}
-          <div class="img-grid">${imgs}</div>
-        </div>`;
-    });
+    carsContainer.innerHTML += `
+      <div class="car">
+        <b>${c.name}</b> – ₹${c.price}/day<br>
+        ${c.description}
+        <div class="imgs">${imgs}</div>
+      </div>
+    `;
   });
-
-  /* ===== BOOKING SUBMIT ===== */
-  bookingForm.onsubmit=e=>{
-    e.preventDefault();
-    db.collection("bookings").add({
-      name:custName.value,
-      mobile:custMobile.value,
-      car:custCar.value,
-      from:fromDate.value,
-      to:toDate.value,
-      status:"Pending",
-      time:new Date()
-    });
-    bookingMsg.innerText="Booking submitted. Status: Pending";
-    bookingMsg.style.color="green";
-    bookingForm.reset();
-  };
-
 });
+
+// BOOKING SUBMIT
+bookingForm.onsubmit = e => {
+  e.preventDefault();
+  db.collection("bookings").add({
+    name:name.value,
+    mobile:mobile.value,
+    car:carSelect.value,
+    from:fromDate.value,
+    to:toDate.value,
+    status:"Pending",
+    time:new Date()
+  });
+  msg.innerText = "Booking submitted. We will contact you soon.";
+  msg.style.color="green";
+  bookingForm.reset();
+};
 </script>
 
 </body>
