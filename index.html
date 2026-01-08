@@ -33,10 +33,10 @@ button{background:#000;color:#fff;border:none;cursor:pointer}
 <div class="box">
 <h3>Book Your Car</h3>
 <form id="bookingForm">
-<input id="name" placeholder="Full Name" required>
-<input id="mobile" placeholder="Mobile Number" required>
-<select id="carSelect" required>
-<option value="">Select Car</option>
+<input id="custName" placeholder="Full Name" required>
+<input id="custMobile" placeholder="Mobile Number" required>
+<select id="custCar" required>
+  <option value="">Select Car</option>
 </select>
 <input type="date" id="fromDate" required>
 <input type="date" id="toDate" required>
@@ -67,26 +67,33 @@ const db = firebase.firestore();
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
+
+  const carsContainer = document.getElementById("carsContainer");
+  const custCar = document.getElementById("custCar");
+  const bookingForm = document.getElementById("bookingForm");
+  const bookingMsg = document.getElementById("bookingMsg");
+  const checkBtn = document.getElementById("checkBtn");
+  const statusResult = document.getElementById("statusResult");
 
   /* LOAD CARS */
   db.collection("cars").onSnapshot(snap=>{
     carsContainer.innerHTML="";
-    carSelect.innerHTML='<option value="">Select Car</option>';
+    custCar.innerHTML='<option value="">Select Car</option>';
 
     if(snap.empty){
-      carsContainer.innerHTML="<b>No cars available right now.</b>";
+      carsContainer.innerHTML="<b>No cars available.</b>";
       return;
     }
 
     snap.forEach(doc=>{
-      const c=doc.data();
-      carSelect.innerHTML+=`<option>${c.name}</option>`;
+      const c = doc.data();
+      custCar.innerHTML += `<option value="${c.name}">${c.name}</option>`;
 
       let imgs="";
       (c.photos||[]).forEach(p=>imgs+=`<img src="${p}">`);
 
-      carsContainer.innerHTML+=`
+      carsContainer.innerHTML += `
         <div class="car">
           <b>${c.name}</b> – ₹${c.price}/day<br>
           ${c.description||""}
@@ -95,29 +102,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  /* BOOKING */
-  bookingForm.addEventListener("submit",e=>{
+  /* BOOKING SUBMIT — THIS WILL 100% FIRE */
+  bookingForm.addEventListener("submit", function (e) {
     e.preventDefault();
+
     db.collection("bookings").add({
-      name:name.value,
-      mobile:mobile.value,
-      car:carSelect.value,
-      from:fromDate.value,
-      to:toDate.value,
-      status:"Pending",
-      reason:"",
-      time:new Date()
+      name: document.getElementById("custName").value,
+      mobile: document.getElementById("custMobile").value,
+      car: custCar.value,
+      from: document.getElementById("fromDate").value,
+      to: document.getElementById("toDate").value,
+      status: "Pending",
+      reason: "",
+      time: new Date()
     }).then(()=>{
-      bookingMsg.innerHTML='<span class="pending">Booking submitted. Waiting for approval.</span>';
+      bookingMsg.innerHTML =
+        '<span class="pending">✅ Booking submitted. Waiting for admin approval.</span>';
       bookingForm.reset();
+    }).catch(err=>{
+      alert("Booking failed: " + err.message);
     });
   });
 
   /* STATUS CHECK */
-  checkBtn.onclick=()=>{
+  checkBtn.addEventListener("click", function () {
     statusResult.innerHTML="";
+    const mobile = document.getElementById("checkMobile").value;
+
     db.collection("bookings")
-      .where("mobile","==",checkMobile.value)
+      .where("mobile","==",mobile)
       .orderBy("time","desc")
       .limit(1)
       .get()
@@ -126,16 +139,15 @@ document.addEventListener("DOMContentLoaded", () => {
           statusResult.innerText="No booking found";
           return;
         }
-        snap.forEach(d=>{
-          const x=d.data();
-          let cls=x.status.toLowerCase();
-          statusResult.innerHTML=
-            `<span class="${cls}">
-             ${x.status}${x.reason?" - "+x.reason:""}
+        snap.forEach(doc=>{
+          const d = doc.data();
+          statusResult.innerHTML =
+            `<span class="${d.status.toLowerCase()}">
+             ${d.status}${d.reason?" - "+d.reason:""}
              </span>`;
         });
       });
-  };
+  });
 
 });
 </script>
