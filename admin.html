@@ -1,44 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel | Shree Chakrdhar Enterprises</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial, sans-serif; background:#f4f4f4; padding:20px; }
-    h2 { text-align:center; }
-    .login, .panel { max-width:800px; margin:auto; background:#fff; padding:20px; border-radius:6px; }
-    input, button { padding:8px; margin:5px 0; }
-    button { cursor:pointer; }
-    .booking { border:1px solid #ddd; padding:10px; margin:10px 0; }
-    .accepted { color:green; font-weight:bold; }
-    .rejected { color:red; font-weight:bold; }
-    .pending { color:orange; font-weight:bold; }
-  </style>
+<meta charset="UTF-8">
+<title>Admin – Shree Chakrdhar Enterprises</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;background:#f2f2f2;padding:15px}
+.box{background:#fff;padding:15px;margin:15px auto;max-width:900px;border-radius:6px}
+input,textarea,button{width:100%;padding:8px;margin:6px 0}
+button{background:#000;color:#fff;border:none;cursor:pointer}
+.admin{display:none}
+.car{border:1px solid #ddd;padding:10px;margin:10px 0}
+</style>
 </head>
 <body>
 
-<h2>Admin Panel – Shree Chakrdhar Enterprises</h2>
+<h2>🔐 Admin Panel</h2>
 
-<div class="login" id="loginBox">
-  <h3>Admin Login</h3>
-  <input type="text" id="adminUser" placeholder="Username"><br>
-  <input type="password" id="adminPass" placeholder="Password"><br>
-  <button onclick="login()">Login</button>
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+<input id="u" placeholder="Username">
+<input id="p" type="password" placeholder="Password">
+<button id="loginBtn">Login</button>
+<p id="loginMsg"></p>
 </div>
 
-<div class="panel" id="adminPanel" style="display:none;">
-  <h3>Customer Bookings</h3>
-  <div id="bookingList"></div>
+<!-- ADMIN PANEL -->
+<div class="box admin" id="adminPanel">
+
+<h3>Add / Update Car</h3>
+<input id="carName" placeholder="Car Name">
+<input id="price" placeholder="Price per day">
+<input id="reg" placeholder="Masked Reg (HR-xx-1234)">
+<textarea id="desc" placeholder="Description"></textarea>
+<textarea id="photos" placeholder="Photo URLs (min 5, one per line)"></textarea>
+<button onclick="saveCar()">Save Car</button>
+
+<h3>Bookings</h3>
+<div id="bookings"></div>
+
 </div>
 
-<!-- Firebase SDKs -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- Firebase config -->
-<script src="firebase.js"></script>
-<script src="admin-script.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAceQf7DxVI9d_-HnVchw4tmiBCSy2P3NI",
+  authDomain: "shree-chakrdhar-booking-ed24a.firebaseapp.com",
+  projectId: "shree-chakrdhar-booking-ed24a"
+});
+const db = firebase.firestore();
+</script>
+
+<script>
+loginBtn.onclick=()=>{
+  if(u.value==="jangrah247" && p.value==="jangra2025"){
+    loginBox.style.display="none";
+    adminPanel.style.display="block";
+    loadBookings();
+  }else{
+    loginMsg.innerText="Wrong login";
+    loginMsg.style.color="red";
+  }
+};
+
+function saveCar(){
+  const imgs = photos.value.split("\n").filter(Boolean);
+  if(imgs.length<5){alert("Minimum 5 photos required");return;}
+
+  db.collection("cars").doc(carName.value).set({
+    name:carName.value,
+    price:price.value,
+    reg:reg.value,
+    description:desc.value,
+    photos:imgs
+  });
+  alert("Car saved");
+}
+
+function loadBookings(){
+  db.collection("bookings").onSnapshot(snap=>{
+    bookings.innerHTML="";
+    snap.forEach(d=>{
+      const b=d.data();
+      bookings.innerHTML+=`
+        <div class="car">
+          ${b.name} | ${b.car} | ${b.mobile}<br>
+          ${b.from} → ${b.to}<br>
+          Status: ${b.status}
+        </div>
+      `;
+    });
+  });
+}
+</script>
 
 </body>
 </html>
